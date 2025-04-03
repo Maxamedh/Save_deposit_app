@@ -117,7 +117,7 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Table.fromTextArray(
-                headers: ['Date', 'Description', 'Amount', 'Deposit', 'Withdraw', 'Balance'],
+                headers: ['Date', 'Description', 'Deposit', 'Withdraw', 'Balance'],
                 data: filteredData.map((data) {
                   return [
                     _formatTimestamp(data['date']),
