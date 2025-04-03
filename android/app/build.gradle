@@ -1,0 +1,57 @@
+plugins {
+    id "com.android.application"
+    // START: FlutterFire Configuration
+    id 'com.google.gms.google-services'
+    // END: FlutterFire Configuration
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    namespace = "com.example.wallet_app"
+    compileSdk = 34 // Set to the required API level explicitly.
+
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
+    defaultConfig {
+        applicationId = "com.example.wallet_app"
+        minSdk = 23 // Set to the minimum SDK version supported by your app. Change if needed.
+        targetSdk = 34 // Ensure this matches the required API level.
+        versionCode = 1
+        versionName = "1.0"
+
+        // App name in Android
+        resValue "string", "app_name", "My Custom App Name" // Change the name of the app here
+    }
+
+    buildTypes {
+        release {
+            // Add your signing config for release builds if required.
+            signingConfig = signingConfigs.debug
+        }
+    }
+
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            if (variant.buildType.name == "release") {
+                // Change the APK name here
+                def customApkName = "safeStore.apk"  // Modify this to your custom name
+                output.outputFileName = customApkName
+            }
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
