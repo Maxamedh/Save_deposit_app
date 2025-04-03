@@ -45,7 +45,7 @@ android {
         variant.outputs.each { output ->
             if (variant.buildType.name == "release") {
                 // Change the APK name here
-                def customApkName = "safeStore.apk"  // Modify this to your custom name
+                def customApkName = "Adam'sApp.apk"  // Modify this to your custom name
                 output.outputFileName = customApkName
             }
         }
