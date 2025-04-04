@@ -16,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _isForgotPassword = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -31,13 +32,11 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       try {
-        // Sign in with Firebase
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
 
-        // Navigate to Dashboard after successful login
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (ctx) => const Dashboardscreen()),
         );
@@ -51,7 +50,6 @@ class _LoginScreenState extends State<LoginScreen> {
           errorMessage = 'An error occurred: ${e.message}';
         }
 
-        // Display error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage)),
         );
@@ -74,18 +72,16 @@ class _LoginScreenState extends State<LoginScreen> {
           email: _emailController.text.trim(),
         );
 
-        // Provide feedback to the user
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Password reset email sent.')),
+          const SnackBar(content: Text('Password reset email sent.')),
         );
 
         setState(() {
           _isForgotPassword = false;
         });
       } on FirebaseAuthException catch (e) {
-        String errorMessage = 'An error occurred: ${e.message}';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
+          SnackBar(content: Text('An error occurred: ${e.message}')),
         );
       } finally {
         setState(() {
@@ -93,9 +89,8 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       }
     } else {
-      // Show an error message if email is empty
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter your email address.')),
+        const SnackBar(content: Text('Please enter your email address.')),
       );
     }
   }
@@ -148,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
         width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF6A11CB), Color(0xFF2575FC)], // Blue gradient
+            colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -179,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: Image.asset(
-                  'images/logoimage.png', // Replace with your logo file path
+                  'images/logoimage.png',
                   fit: BoxFit.contain,
                 ),
               ),
@@ -196,14 +191,52 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Email',
                       TextInputType.emailAddress,
                     ),
-                    if (!_isForgotPassword) ...[
-                      userInput(
-                        _passwordController,
-                        'Password',
-                        TextInputType.visiblePassword,
-                        obscureText: true,
+                    if (!_isForgotPassword)
+                      Container(
+                        margin: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 6,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          keyboardType: TextInputType.visiblePassword,
+                          decoration: InputDecoration(
+                            hintText: 'Password',
+                            hintStyle: const TextStyle(color: Colors.grey),
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 18, horizontal: 20),
+                            border: InputBorder.none,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your Password';
+                            }
+                            return null;
+                          },
+                        ),
                       ),
-                    ],
                     const SizedBox(height: 20),
                     Visibility(
                       visible: !_isForgotPassword,
@@ -223,7 +256,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         )
                             : const Text(
                           'Login',
-                          style: TextStyle(fontSize: 18, color: Colors.white),
+                          style: TextStyle(
+                              fontSize: 18, color: Colors.white),
                         ),
                       ),
                     ),
@@ -245,7 +279,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         )
                             : const Text(
                           'Send Password Reset Email',
-                          style: TextStyle(fontSize: 18, color: Colors.white),
+                          style: TextStyle(
+                              fontSize: 18, color: Colors.white),
                         ),
                       ),
                     ],

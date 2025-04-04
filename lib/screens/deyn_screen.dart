@@ -7,51 +7,72 @@ class DepositScreen extends StatelessWidget {
   final String personName;
   final Operations operations = Operations();
 
-  DepositScreen({required this.personId,required this.personName});
+  DepositScreen({required this.personId, required this.personName});
 
   @override
   Widget build(BuildContext context) {
-    var data = operations.getDipositTransactions(personId);
-    print(data);
     return Scaffold(
       appBar: AppBar(title: const Text('Deposit Transactions')),
       body: StreamBuilder(
         stream: operations.getDipositTransactions(personId),
         builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text('No Deposit transactions found.'));
+            return const Center(child: Text('No deposit transactions found.'));
           }
 
-          return ListView(
-            children: snapshot.data!.docs.map((doc) {
-              Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-              return ListTile(
-                title: Text("Amount: \$${data['amount']} "),
-                subtitle: Text(data['description']),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () => _editTransaction(context, doc.id, data),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => operations.deleteDiposit(doc.id),
-                    ),
-                  ],
+          // Calculate total balance
+          double totalBalance = snapshot.data!.docs.fold(0.0, (sum, doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return sum + (data['amount'] ?? 0.0);
+          });
+
+          return Column(
+            children: [
+              // Padding(
+              //   padding: const EdgeInsets.all(16.0),
+              //   child: Text(
+              //     'Total Balance: \$${totalBalance.toStringAsFixed(2)}',
+              //     style: const TextStyle(
+              //       fontSize: 20,
+              //       fontWeight: FontWeight.bold,
+              //       color: Colors.green,
+              //     ),
+              //   ),
+              // ),
+              Expanded(
+                child: ListView(
+                  children: snapshot.data!.docs.map((doc) {
+                    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+                    return ListTile(
+                      title: Text("Amount: \$${data['amount']}"),
+                      subtitle: Text(data['description'] ?? ''),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () => _editTransaction(context, doc.id, data),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => operations.deleteDiposit(doc.id),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
                 ),
-              );
-            }).toList(),
+              ),
+            ],
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _addTransaction(context),
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -64,21 +85,36 @@ class DepositScreen extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Add Deposit'),
+          title: const Text('Add Deposit'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: amountController, decoration: InputDecoration(labelText: 'Amount')),
-              TextField(controller: descriptionController, decoration: InputDecoration(labelText: 'Description')),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Amount'),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: 'Description'),
+              ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () async {
-                await operations.addDeposit(personId, double.parse(amountController.text), descriptionController.text,personName);
-                Navigator.pop(context);
+                final double? amount = double.tryParse(amountController.text);
+                if (amount != null) {
+                  await operations.addDeposit(
+                    personId,
+                    amount,
+                    descriptionController.text,
+                    personName,
+                  );
+                  Navigator.pop(context);
+                }
               },
-              child: Text('Add'),
+              child: const Text('Add'),
             ),
           ],
         );
@@ -87,28 +123,45 @@ class DepositScreen extends StatelessWidget {
   }
 
   void _editTransaction(BuildContext context, String transactionId, Map<String, dynamic> data) {
-    TextEditingController amountController = TextEditingController(text: data['amount'].toString());
-    TextEditingController descriptionController = TextEditingController(text: data['description']);
+    TextEditingController amountController =
+    TextEditingController(text: data['amount'].toString());
+    TextEditingController descriptionController =
+    TextEditingController(text: data['description']);
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Edit Deposit'),
+          title: const Text('Edit Deposit'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: amountController, decoration: InputDecoration(labelText: 'Amount')),
-              TextField(controller: descriptionController, decoration: InputDecoration(labelText: 'Description')),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Amount'),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: 'Description'),
+              ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () async {
-                await operations.updateDeposit(transactionId, double.parse(amountController.text), descriptionController.text,personName);
-                Navigator.pop(context);
+                final double? amount = double.tryParse(amountController.text);
+                if (amount != null) {
+                  await operations.updateDeposit(
+                    transactionId,
+                    amount,
+                    descriptionController.text,
+                    personName,
+                  );
+                  Navigator.pop(context);
+                }
               },
-              child: Text('Update'),
+              child: const Text('Update'),
             ),
           ],
         );

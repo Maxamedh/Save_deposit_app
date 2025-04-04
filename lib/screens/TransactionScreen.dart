@@ -43,12 +43,13 @@ class _TransactionScreenState extends State<TransactionScreen> {
   Future<void> _calculateBalance() async {
     double deposits = await operations.getTotalDeposits(widget.personId);
     double withdraws = await operations.getTotalWithdraws(widget.personId);
-print('deposit:${deposits}');
-    print('withdraws:${deposits}');
+    print('deposit: $deposits');
+    print('withdraws: $withdraws');
     setState(() {
       totalDeposits = deposits;
       totalWithdraws = withdraws;
-      availableBalance = (totalDeposits - totalWithdraws).clamp(0.0, double.infinity);
+      availableBalance =
+          (totalDeposits - totalWithdraws).clamp(0.0, double.infinity);
     });
   }
 
@@ -61,7 +62,11 @@ print('deposit:${deposits}');
 
       setState(() {
         reportData = reportSnapshot.docs
-            .map((doc) => {'id': doc.id, 'amount': doc['amount'], 'date': doc['date']})
+            .map((doc) => {
+          'id': doc.id,
+          'amount': doc['amount'],
+          'date': doc['date']
+        })
             .toList();
       });
     } catch (e) {
@@ -126,9 +131,12 @@ print('deposit:${deposits}');
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildSmallCard('Deposit', totalDeposits, Colors.green, Icons.check, () => _navigateToDeyntaScreen(context)),
-                _buildSmallCard('Withdraw', totalWithdraws, Colors.red, Icons.warning, () => _navigateToDeynBixintaScreen(context)),
-                _buildSmallCardReport('Report', Colors.orange, Icons.insert_chart, () => _navigateToWarbixinScreen(context)),
+                _buildSmallCard('Deposit', totalDeposits, Colors.green,
+                    Icons.check, () => _navigateToDeyntaScreen(context)),
+                _buildSmallCard('Withdraw', totalWithdraws, Colors.red,
+                    Icons.warning, () => _navigateToDeynBixintaScreen(context)),
+                _buildSmallCardReport('Report', Colors.orange,
+                    Icons.insert_chart, () => _navigateToWarbixinScreen(context)),
               ],
             ),
           ],
@@ -137,7 +145,8 @@ print('deposit:${deposits}');
     );
   }
 
-  Widget _buildSmallCard(String title, num count, Color color, IconData icon, Function onTap) {
+  Widget _buildSmallCard(String title, num count, Color color, IconData icon,
+      Function onTap) {
     return Expanded(
       child: GestureDetector(
         onTap: () => onTap(),
@@ -162,7 +171,7 @@ print('deposit:${deposits}');
                 ),
                 SizedBox(height: 5),
                 Text(
-                  count.toString(),
+                  count.toStringAsFixed(2),
                   style: TextStyle(
                     fontSize: 18,
                     color: Colors.white,
@@ -176,7 +185,9 @@ print('deposit:${deposits}');
       ),
     );
   }
-  Widget _buildSmallCardReport(String title,Color color, IconData icon, Function onTap) {
+
+  Widget _buildSmallCardReport(
+      String title, Color color, IconData icon, Function onTap) {
     return Expanded(
       child: GestureDetector(
         onTap: () => onTap(),
@@ -216,30 +227,42 @@ print('deposit:${deposits}');
     );
   }
 
-  // Navigation Methods
-  void _navigateToDeyntaScreen(BuildContext context) {
-    Navigator.push(
+  void _navigateToDeyntaScreen(BuildContext context) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DepositScreen(personId: widget.personId, personName: widget.userName),
+        builder: (context) => DepositScreen(
+          personId: widget.personId,
+          personName: widget.userName,
+        ),
       ),
     );
+    _calculateBalance(); // Refresh balance
+    _fetchTransactionData(); // Refresh transactions
   }
 
-  void _navigateToDeynBixintaScreen(BuildContext context) {
-    Navigator.push(
+  void _navigateToDeynBixintaScreen(BuildContext context) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => WithdrawScreen(personId: widget.personId, personName: widget.userName),
+        builder: (context) => WithdrawScreen(
+          personId: widget.personId,
+          personName: widget.userName,
+        ),
       ),
     );
+    _calculateBalance(); // Refresh balance
+    _fetchTransactionData(); // Refresh transactions
   }
 
   void _navigateToWarbixinScreen(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => WarbixinScreen(personId: widget.personId, personName: widget.userName),
+        builder: (context) => WarbixinScreen(
+          personId: widget.personId,
+          personName: widget.userName,
+        ),
       ),
     );
   }

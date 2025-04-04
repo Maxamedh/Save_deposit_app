@@ -51,37 +51,60 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
       List<Map<String, dynamic>> combinedData = [];
 
       for (var doc in depositSnapshot.docs) {
-        _currentBalance += doc['amount'];
         combinedData.add({
           'date': doc['timestamp'],
           'description': doc['description'],
           'amount': doc['amount'],
-          'deposit': doc['amount'],
-          'withdraw': 0.00,
-          'balance': _currentBalance,
+          'type': 'deposit',
         });
       }
 
       for (var doc in withdrawSnapshot.docs) {
-        _currentBalance -= doc['amount'];
         combinedData.add({
           'date': doc['timestamp'],
           'description': doc['description'],
           'amount': doc['amount'],
-          'deposit': 0.00,
-          'withdraw': doc['amount'],
-          'balance': _currentBalance,
+          'type': 'withdraw',
+        });
+      }
+
+      // Sort by date ascending
+      combinedData.sort((a, b) => (a['date'] as Timestamp).compareTo(b['date'] as Timestamp));
+
+      // Recalculate balances after sorting
+      double runningBalance = 0.0;
+      List<Map<String, dynamic>> finalData = [];
+
+      for (var data in combinedData) {
+        double depositAmount = 0.0;
+        double withdrawAmount = 0.0;
+
+        if (data['type'] == 'deposit') {
+          depositAmount = data['amount'];
+          runningBalance += depositAmount;
+        } else {
+          withdrawAmount = data['amount'];
+          runningBalance -= withdrawAmount;
+        }
+
+        finalData.add({
+          'date': data['date'],
+          'description': data['description'],
+          'deposit': depositAmount,
+          'withdraw': withdrawAmount,
+          'balance': runningBalance,
         });
       }
 
       setState(() {
-        reportData = combinedData;
+        reportData = finalData;
         filteredData = List.from(reportData);
       });
     } catch (e) {
       print('Error fetching report data: $e');
     }
   }
+
 
   void _filterData(String query) {
     setState(() {
