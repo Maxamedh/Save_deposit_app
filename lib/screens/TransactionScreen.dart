@@ -8,14 +8,14 @@ import '../services/operations.dart';
 class TransactionScreen extends StatefulWidget {
   final String userName;
   final String userTell;
-  final String userId;
+  // final String userId;
   final String personId;
 
   const TransactionScreen({
     Key? key,
     required this.userName,
     required this.userTell,
-    required this.userId,
+    // required this.userId,
     required this.personId,
   }) : super(key: key);
 
@@ -36,7 +36,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
   void initState() {
     super.initState();
     _amountController = TextEditingController();
-    _fetchTransactionData();
+    // _fetchTransactionData();
     _calculateBalance();
   }
 
@@ -53,26 +53,26 @@ class _TransactionScreenState extends State<TransactionScreen> {
     });
   }
 
-  Future<void> _fetchTransactionData() async {
-    try {
-      final reportSnapshot = await FirebaseFirestore.instance
-          .collection('transactions')
-          .where('userId', isEqualTo: widget.userId)
-          .get();
-
-      setState(() {
-        reportData = reportSnapshot.docs
-            .map((doc) => {
-          'id': doc.id,
-          'amount': doc['amount'],
-          'date': doc['date']
-        })
-            .toList();
-      });
-    } catch (e) {
-      print('Error fetching transactions: $e');
-    }
-  }
+  // Future<void> _fetchTransactionData() async {
+  //   try {
+  //     final reportSnapshot = await FirebaseFirestore.instance
+  //         .collection('transactions')
+  //         .where('userId', isEqualTo: widget.userId)
+  //         .get();
+  //
+  //     setState(() {
+  //       reportData = reportSnapshot.docs
+  //           .map((doc) => {
+  //         'id': doc.id,
+  //         'amount': doc['amount'],
+  //         'date': doc['date']
+  //       })
+  //           .toList();
+  //     });
+  //   } catch (e) {
+  //     print('Error fetching transactions: $e');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -238,7 +238,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
       ),
     );
     _calculateBalance(); // Refresh balance
-    _fetchTransactionData(); // Refresh transactions
+    // _fetchTransactionData(); // Refresh transactions
   }
 
   void _navigateToDeynBixintaScreen(BuildContext context) async {
@@ -252,7 +252,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
       ),
     );
     _calculateBalance(); // Refresh balance
-    _fetchTransactionData(); // Refresh transactions
+    // _fetchTransactionData(); // Refresh transactions
   }
 
   void _navigateToWarbixinScreen(BuildContext context) {

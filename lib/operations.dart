@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class Operations {
+class Operations1 {
   final FirebaseFirestore _firestore;
 
-  Operations(this._firestore);
+  Operations1(this._firestore);
 
   // Function to update person info in Firestore
   Future<void> updatePerson(String personId, String name, String tell) async {

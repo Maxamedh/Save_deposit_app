@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'TransactionScreen.dart';
-import 'package:save_deposits/operations.dart'; // Import the new class
-import 'package:save_deposits/screens/LoginScreen.dart'; // Import the login screen
+import 'package:save_deposits/operations.dart';
+import 'package:save_deposits/screens/LoginScreen.dart';
+import '../services/operations.dart';
 
 class Dashboardscreen extends StatefulWidget {
   const Dashboardscreen({super.key});
@@ -15,8 +17,9 @@ class Dashboardscreen extends StatefulWidget {
 class _DashboardscreenState extends State<Dashboardscreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  late Operations _personOperations; // Instance of PersonOperations
+  final Operations operations = Operations();
 
+  late Operations1 _personOperations;
   late Stream<List<Person>> _personStream;
   String? _userEmail;
   String? _userName;
@@ -24,21 +27,20 @@ class _DashboardscreenState extends State<Dashboardscreen> {
   @override
   void initState() {
     super.initState();
-    _personOperations = Operations(_firestore);
+    _personOperations = Operations1(_firestore);
     _personStream = _getPersonsForCurrentUser();
     _getUserDetails();
+
   }
 
-  // Fetch user email and name from Firestore
   void _getUserDetails() async {
     User? user = _auth.currentUser;
     if (user != null) {
       DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
-
       if (userDoc.exists) {
         setState(() {
           _userEmail = user.email ?? 'No email available';
-          _userName = userDoc['name'] ?? 'No name available'; // Fetch name from Firestore
+          _userName = userDoc['name'] ?? 'No name available';
         });
       }
     }
@@ -46,7 +48,6 @@ class _DashboardscreenState extends State<Dashboardscreen> {
 
   Stream<List<Person>> _getPersonsForCurrentUser() {
     String userId = _auth.currentUser!.uid;
-
     return _firestore
         .collection('persons')
         .where('userId', isEqualTo: userId)
@@ -94,16 +95,11 @@ class _DashboardscreenState extends State<Dashboardscreen> {
             ElevatedButton(
               onPressed: () async {
                 String userId = _auth.currentUser!.uid;
-                String name = nameController.text;
-                String tell = tellController.text;
-
-                // Add new person to Firestore
                 await _firestore.collection('persons').add({
-                  'name': name,
-                  'tell': tell,
+                  'name': nameController.text,
+                  'tell': tellController.text,
                   'userId': userId,
                 });
-
                 Navigator.of(context).pop();
               },
               child: const Text('Add'),
@@ -114,16 +110,14 @@ class _DashboardscreenState extends State<Dashboardscreen> {
     );
   }
 
-  // Sign out the user and navigate to the login screen
   Future<void> _signOut() async {
     await _auth.signOut();
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()), // Navigate to login screen
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
     );
   }
 
-  // Dialog to change password
   void _showChangePasswordDialog(BuildContext context) {
     TextEditingController oldPasswordController = TextEditingController();
     TextEditingController newPasswordController = TextEditingController();
@@ -163,42 +157,64 @@ class _DashboardscreenState extends State<Dashboardscreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                String oldPassword = oldPasswordController.text;
-                String newPassword = newPasswordController.text;
-                String confirmPassword = confirmPasswordController.text;
-
-                // Validate inputs
-                if (newPassword != confirmPassword) {
+                if (newPasswordController.text != confirmPasswordController.text) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Passwords do not match')));
+                    const SnackBar(content: Text('Passwords do not match')),
+                  );
                   return;
                 }
 
                 try {
-                  // Get current user
                   User? user = _auth.currentUser;
                   if (user != null) {
-                    // Reauthenticate user before updating password
                     AuthCredential credential = EmailAuthProvider.credential(
                       email: user.email!,
-                      password: oldPassword,
+                      password: oldPasswordController.text,
                     );
-
                     await user.reauthenticateWithCredential(credential);
-
-                    // Update password
-                    await user.updatePassword(newPassword);
-
+                    await user.updatePassword(newPasswordController.text);
                     ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Password changed successfully')));
-                    Navigator.of(context).pop(); // Close dialog
+                      const SnackBar(content: Text('Password changed successfully')),
+                    );
+                    Navigator.of(context).pop();
                   }
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e')));
+                    SnackBar(content: Text('Error: $e')),
+                  );
                 }
               },
               child: const Text('Change'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  Future<void> _deletePerson(String personId) async {
+    await _firestore.collection('persons').doc(personId).delete();
+  }
+
+  void _showDeleteDialog(String personId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: const Text('Are you sure you want to delete this person?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _deletePerson(personId);
+                Navigator.of(context).pop();
+              },
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -209,7 +225,7 @@ class _DashboardscreenState extends State<Dashboardscreen> {
   @override
   Widget build(BuildContext context) {
     if (_userName == null || _userEmail == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator())); // Show loading until data is fetched
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -225,14 +241,7 @@ class _DashboardscreenState extends State<Dashboardscreen> {
               ),
             ),
           ),
-          title: const Text(
-            'My Dashboard',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
+          title: const Text('My Dashboard', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
           centerTitle: true,
         ),
       ),
@@ -241,8 +250,8 @@ class _DashboardscreenState extends State<Dashboardscreen> {
           padding: EdgeInsets.zero,
           children: [
             UserAccountsDrawerHeader(
-              accountName: Text(_userName ?? 'Loading...'),  // Safely handle null userName
-              accountEmail: Text(_userEmail ?? 'Loading...'),  // Safely handle null userEmail
+              accountName: Text(_userName ?? 'Loading...'),
+              accountEmail: Text(_userEmail ?? 'Loading...'),
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
                 child: const Icon(Icons.person, size: 50, color: Colors.blue),
@@ -251,31 +260,25 @@ class _DashboardscreenState extends State<Dashboardscreen> {
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Home'),
-              onTap: () {
-                Navigator.pop(context);
-              },
+              onTap: () => Navigator.pop(context),
             ),
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Change Password'),
               onTap: () {
                 Navigator.pop(context);
-                _showChangePasswordDialog(context); // Show password change dialog
+                _showChangePasswordDialog(context);
               },
             ),
             ListTile(
               leading: const Icon(Icons.help),
               title: const Text('Help'),
-              onTap: () {
-                Navigator.pop(context);
-              },
+              onTap: () => Navigator.pop(context),
             ),
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
-              onTap: () {
-                _signOut(); // Call the sign out function
-              },
+              onTap: () => _signOut(),
             ),
           ],
         ),
@@ -291,29 +294,86 @@ class _DashboardscreenState extends State<Dashboardscreen> {
             return const Center(child: Text('No persons found'));
           } else {
             var persons = snapshot.data!;
-            String userId = _auth.currentUser!.uid;
             return ListView.builder(
               padding: const EdgeInsets.all(16.0),
               itemCount: persons.length,
               itemBuilder: (context, index) {
                 var person = persons[index];
-                return DashboardListTile(
-                  title: person.name,
-                  subtitle: person.tell,
-                  icon: Icons.account_balance_wallet,
-                  color: Colors.blue.shade400,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => TransactionScreen(userId: userId, userName: person.name, userTell: person.tell, personId: person.id)),
-                    );
-                  },
-                  onEdit: () {
-                    _showEditDialog(context, person);
-                  },
-                  onDelete: () {
-                    // Use PersonOperations class to delete the person
-                    _personOperations.deletePerson(person.id);
+                return FutureBuilder<Map<String, double>>(
+                  future: _fetchPersonTotals(person.id),
+                  builder: (context, totalsSnapshot) {
+                    if (totalsSnapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (totalsSnapshot.hasError) {
+                      return const Text('Error loading totals');
+                    } else {
+                      final totals = totalsSnapshot.data!;
+                      final deposit = totals['deposit']!;
+                      final withdraw = totals['withdraw']!;
+                      final balance = deposit - withdraw;
+
+                      return  GestureDetector(
+                          onTap: () {
+                            // Navigate to the TransactionScreen with the selected person's ID
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TransactionScreen(
+                                    userName: person.name,
+                                    userTell: person.tell,
+                                    // userId: person.userId,
+                                    personId: person.id
+                                ),
+                              ),
+                            );
+                          },
+                          child: Card(
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(person.name,
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                      ),
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, size: 20,color: Colors.blue),
+                                            onPressed: () => _showEditDialog(context, person),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete, size: 20,color: Colors.red),
+                                            onPressed: () {
+                                              _showDeleteDialog(person.id);
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      _buildStatBox('Credit(↑)', deposit, Colors.grey.shade300),
+                                      _buildStatBox('Debit(↓)', withdraw, Colors.grey.shade300),
+                                      _buildStatBox('Balance', balance, Colors.purple.shade700, textColor: Colors.white),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                      );
+                    }
                   },
                 );
               },
@@ -325,6 +385,25 @@ class _DashboardscreenState extends State<Dashboardscreen> {
         onPressed: () => _showAddDialog(context),
         backgroundColor: Colors.blue.shade400,
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildStatBox(String label, double value, Color color, {Color textColor = Colors.black}) {
+    return Container(
+      width: 100,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: textColor)),
+          const SizedBox(height: 4),
+          Text("S ${value.toStringAsFixed(0)}",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColor)),
+        ],
       ),
     );
   }
@@ -353,14 +432,11 @@ class _DashboardscreenState extends State<Dashboardscreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
-                // Use PersonOperations class to update the person
                 await _personOperations.updatePerson(person.id, nameController.text, tellController.text);
                 Navigator.of(context).pop();
               },
@@ -371,6 +447,12 @@ class _DashboardscreenState extends State<Dashboardscreen> {
       },
     );
   }
+
+  Future<Map<String, double>> _fetchPersonTotals(String personId) async {
+    final deposit = await operations.getTotalDeposits(personId);
+    final withdraw = await operations.getTotalWithdraws(personId);
+    return {'deposit': deposit, 'withdraw': withdraw};
+  }
 }
 
 class Person {
@@ -379,54 +461,4 @@ class Person {
   final String tell;
 
   Person({required this.id, required this.name, required this.tell});
-}
-
-class DashboardListTile extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  const DashboardListTile({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      elevation: 3,
-      child: ListTile(
-        onTap: onTap,
-        leading: CircleAvatar(
-          backgroundColor: color,
-          child: Icon(icon, color: Colors.white),
-        ),
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              onPressed: onEdit,
-              icon: const Icon(Icons.edit,color: Colors.blue),
-            ),
-            IconButton(
-              onPressed: onDelete,
-              icon: const Icon(Icons.delete, color: Colors.red),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
