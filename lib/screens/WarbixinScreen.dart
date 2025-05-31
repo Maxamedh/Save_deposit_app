@@ -140,6 +140,17 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
+              // Person name header added here
+              pw.Text(
+                'Name : ${widget.personName}',
+                style: pw.TextStyle(
+                  fontSize: 20,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.blue900,
+                ),
+              ),
+              pw.SizedBox(height: 10),
+
               pw.Table.fromTextArray(
                 headers: ['Date', 'Description', 'Deposit', 'Withdraw', 'Balance'],
                 data: [
@@ -188,6 +199,7 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
     Share.shareXFiles([xFile], text: "Here is the report PDF");
   }
 
+
   @override
   Widget build(BuildContext context) {
     // Calculate totals for display
@@ -219,6 +231,16 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
               ),
               onChanged: _filterData,
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(' Name: ${ widget.personName} '
+               ,  // or person.name
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
             const SizedBox(height: 20),
             Expanded(
               child: SingleChildScrollView(
@@ -227,14 +249,18 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
                   elevation: 2,
                   child: DataTable(
                     headingRowColor: MaterialStateProperty.all(Colors.blue.shade100),
+
                     columns: const [
+
                       DataColumn(label: Text('Date')),
                       DataColumn(label: Text('Description')),
                       DataColumn(label: Text('Deposit')),
                       DataColumn(label: Text('Withdraw')),
                       DataColumn(label: Text('Balance')),
                     ],
+
                     rows: [
+
                       ...filteredData.map(
                             (data) => DataRow(cells: [
                           DataCell(Text(_formatTimestamp(data['date']))),
