@@ -313,19 +313,18 @@ class _DashboardscreenState extends State<Dashboardscreen> {
                       final balance = deposit - withdraw;
 
                       return  GestureDetector(
-                          onTap: () {
-                            // Navigate to the TransactionScreen with the selected person's ID
-                            Navigator.push(
+                          onTap: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => TransactionScreen(
-                                    userName: person.name,
-                                    userTell: person.tell,
-                                    // userId: person.userId,
-                                    personId: person.id
+                                  userName: person.name,
+                                  userTell: person.tell,
+                                  personId: person.id,
                                 ),
                               ),
                             );
+                            setState(() {}); // Refresh when back from TransactionScreen
                           },
                           child: Card(
                             margin: const EdgeInsets.symmetric(vertical: 8),

@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:pdf/pdf.dart';  // Required for PdfColor
+import 'package:pdf/pdf.dart'; // Required for PdfColor
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:printing/printing.dart';
@@ -21,7 +21,6 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
   late TextEditingController _searchController;
   List<Map<String, dynamic>> reportData = [];
   List<Map<String, dynamic>> filteredData = [];
-  double _currentBalance = 0.0;
 
   @override
   void initState() {
@@ -54,7 +53,7 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
         combinedData.add({
           'date': doc['timestamp'],
           'description': doc['description'],
-          'amount': doc['amount'],
+          'amount': (doc['amount'] as num).toDouble(),
           'type': 'deposit',
         });
       }
@@ -63,7 +62,7 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
         combinedData.add({
           'date': doc['timestamp'],
           'description': doc['description'],
-          'amount': doc['amount'],
+          'amount': (doc['amount'] as num).toDouble(),
           'type': 'withdraw',
         });
       }
@@ -105,7 +104,6 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
     }
   }
 
-
   void _filterData(String query) {
     setState(() {
       filteredData = reportData.where((data) {
@@ -125,13 +123,16 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
   Future<void> _shareReport() async {
     final pdf = pw.Document();
 
-    // Define custom text styles for headers and data
     final headerStyle = pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold);
     final dataStyle = pw.TextStyle(fontSize: 12);
 
-    // Define colors using PdfColor (from the pdf package)
-    final blackColor = PdfColor.fromInt(0x000000); // Black color
-    final blueGreyColor = PdfColor.fromInt(0x607D8B); // Blue-grey color
+    final blackColor = PdfColor.fromInt(0xFF000000);
+    final blueGreyColor = PdfColor.fromInt(0xFF607D8B);
+
+    // Calculate totals for PDF
+    double totalDeposit = filteredData.fold(0.0, (sum, item) => sum + (item['deposit'] as double));
+    double totalWithdraw = filteredData.fold(0.0, (sum, item) => sum + (item['withdraw'] as double));
+    double balance = totalDeposit - totalWithdraw;
 
     pdf.addPage(
       pw.Page(
@@ -141,29 +142,36 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
             children: [
               pw.Table.fromTextArray(
                 headers: ['Date', 'Description', 'Deposit', 'Withdraw', 'Balance'],
-                data: filteredData.map((data) {
-                  return [
-                    _formatTimestamp(data['date']),
-                    data['description'].toString(),
-                    data['deposit'].toString(),
-                    data['withdraw'].toString(),
-                    data['balance'].toString(),
-                  ];
-                }).toList(),
+                data: [
+                  ...filteredData.map((data) {
+                    return [
+                      _formatTimestamp(data['date']),
+                      data['description'].toString(),
+                      data['deposit'].toStringAsFixed(2),
+                      data['withdraw'].toStringAsFixed(2),
+                      data['balance'].toStringAsFixed(2),
+                    ];
+                  }),
+                  [
+                    'Total',
+                    '',
+                    totalDeposit.toStringAsFixed(2),
+                    totalWithdraw.toStringAsFixed(2),
+                    balance.toStringAsFixed(2),
+                  ],
+                ],
                 headerStyle: headerStyle,
                 cellStyle: dataStyle,
-                border: pw.TableBorder.all(width: 0.5, color: blackColor),  // Using black color for the border
+                border: pw.TableBorder.all(width: 0.5, color: blackColor),
                 cellAlignment: pw.Alignment.centerLeft,
-                headerDecoration: pw.BoxDecoration(
-                  color: blueGreyColor,  // Using blue-grey color for header
-                ),
+                headerDecoration: pw.BoxDecoration(color: blueGreyColor),
                 cellHeight: 30,
                 columnWidths: {
-                  0: pw.FlexColumnWidth(2), // Date column width
-                  1: pw.FlexColumnWidth(3), // Description column width
-                  2: pw.FlexColumnWidth(2), // Deposit column width
-                  3: pw.FlexColumnWidth(2), // Withdraw column width
-                  4: pw.FlexColumnWidth(2), // Balance column width
+                  0: pw.FlexColumnWidth(2),
+                  1: pw.FlexColumnWidth(3),
+                  2: pw.FlexColumnWidth(2),
+                  3: pw.FlexColumnWidth(2),
+                  4: pw.FlexColumnWidth(2),
                 },
               ),
             ],
@@ -172,17 +180,21 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
       ),
     );
 
-    // Save the generated PDF file to a temporary directory
     final output = await getTemporaryDirectory();
     final file = File("${output.path}/report.pdf");
     await file.writeAsBytes(await pdf.save());
 
-    final XFile xFile = XFile(file.path);
+    final xFile = XFile(file.path);
     Share.shareXFiles([xFile], text: "Here is the report PDF");
   }
 
   @override
   Widget build(BuildContext context) {
+    // Calculate totals for display
+    double totalDeposit = filteredData.fold(0.0, (sum, item) => sum + (item['deposit'] as double));
+    double totalWithdraw = filteredData.fold(0.0, (sum, item) => sum + (item['withdraw'] as double));
+    double balance = totalDeposit - totalWithdraw;
+
     return Scaffold(
       appBar: AppBar(
         title: Center(child: Text('Report')),
@@ -207,25 +219,54 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
               ),
               onChanged: _filterData,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Expanded(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columns: [
-                    DataColumn(label: Text('Date')),
-                    DataColumn(label: Text('Description')),
-                    DataColumn(label: Text('Deposit')),
-                    DataColumn(label: Text('Withdraw')),
-                    DataColumn(label: Text('Balance')),
-                  ],
-                  rows: filteredData.map((data) => DataRow(cells: [
-                    DataCell(Text(_formatTimestamp(data['date']))),
-                    DataCell(Text(data['description'].toString())),
-                    DataCell(Text(data['deposit'].toString())),
-                    DataCell(Text(data['withdraw'].toString())),
-                    DataCell(Text(data['balance'].toString())),
-                  ])).toList(),
+                child: Card(
+                  elevation: 2,
+                  child: DataTable(
+                    headingRowColor: MaterialStateProperty.all(Colors.blue.shade100),
+                    columns: const [
+                      DataColumn(label: Text('Date')),
+                      DataColumn(label: Text('Description')),
+                      DataColumn(label: Text('Deposit')),
+                      DataColumn(label: Text('Withdraw')),
+                      DataColumn(label: Text('Balance')),
+                    ],
+                    rows: [
+                      ...filteredData.map(
+                            (data) => DataRow(cells: [
+                          DataCell(Text(_formatTimestamp(data['date']))),
+                          DataCell(Text(data['description'].toString())),
+                          DataCell(Text(data['deposit'].toStringAsFixed(2))),
+                          DataCell(Text(data['withdraw'].toStringAsFixed(2))),
+                          DataCell(Text(data['balance'].toStringAsFixed(2))),
+                        ]),
+                      ),
+                      DataRow(
+                        color: MaterialStateProperty.all(Colors.blue.shade50),
+                        cells: [
+                          const DataCell(
+                            Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                          const DataCell(Text('')),
+                          DataCell(
+                            Text(totalDeposit.toStringAsFixed(2),
+                                style: const TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                          DataCell(
+                            Text(totalWithdraw.toStringAsFixed(2),
+                                style: const TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                          DataCell(
+                            Text(balance.toStringAsFixed(2),
+                                style: const TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
