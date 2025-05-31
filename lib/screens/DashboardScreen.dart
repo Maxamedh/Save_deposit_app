@@ -328,10 +328,29 @@ class _DashboardscreenState extends State<Dashboardscreen> {
                           },
                           child: Card(
                             margin: const EdgeInsets.symmetric(vertical: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            elevation: 2,
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            elevation: 6,
+                            shadowColor: Colors.deepPurple.withOpacity(0.3),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF6A11CB), // deep purple
+                                    Color(0xFF2575FC), // bright blue
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.15),
+                                    offset: const Offset(0, 8),
+                                    blurRadius: 16,
+                                  ),
+                                ],
+                              ),
+                              padding: const EdgeInsets.all(16),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -339,38 +358,55 @@ class _DashboardscreenState extends State<Dashboardscreen> {
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Expanded(
-                                        child: Text(person.name,
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                        child: Text(
+                                          person.name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                            color: Colors.white,
+                                            shadows: [
+                                              Shadow(
+                                                offset: Offset(0, 1),
+                                                blurRadius: 2,
+                                                color: Colors.black26,
+                                              ),
+                                            ],
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
                                       Row(
                                         children: [
                                           IconButton(
-                                            icon: const Icon(Icons.edit, size: 20,color: Colors.blue),
+                                            icon: const Icon(Icons.edit, size: 22, color: Colors.white70),
                                             onPressed: () => _showEditDialog(context, person),
+                                            tooltip: 'Edit',
                                           ),
                                           IconButton(
-                                            icon: const Icon(Icons.delete, size: 20,color: Colors.red),
+                                            icon: const Icon(Icons.delete, size: 22, color: Colors.redAccent),
                                             onPressed: () {
                                               _showDeleteDialog(person.id);
                                             },
+                                            tooltip: 'Delete',
                                           ),
                                         ],
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: 14),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      _buildStatBox('Credit(↑)', deposit, Colors.grey.shade300),
-                                      _buildStatBox('Debit(↓)', withdraw, Colors.grey.shade300),
-                                      _buildStatBox('Balance', balance, Colors.purple.shade700, textColor: Colors.white),
+                                      _buildStatBox('Credit(↑)', deposit, Colors.white.withOpacity(0.25), textColor: Colors.white),
+                                      _buildStatBox('Debit(↓)', withdraw, Colors.white.withOpacity(0.25), textColor: Colors.white),
+                                      _buildStatBox('Balance', balance, Colors.white, textColor: Colors.deepPurple.shade700),
                                     ],
                                   ),
                                 ],
                               ),
                             ),
                           )
+
                       );
                     }
                   },
