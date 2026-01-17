@@ -27,7 +27,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     double totalWithdraws = await operations.getTotalWithdraws(widget.personId);
 
     setState(() {
-      availableBalance = (totalDeposits - totalWithdraws).clamp(0.0, double.infinity);
+      availableBalance = totalDeposits - totalWithdraws;
     });
   }
 
@@ -66,10 +66,10 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Please enter a valid amount')),
                         );
-                      } else if (withdrawAmount > availableBalance) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Insufficient balance')),
-                        );
+                      // } else if (withdrawAmount > availableBalance) {
+                      //   ScaffoldMessenger.of(context).showSnackBar(
+                      //     SnackBar(content: Text('Insufficient balance')),
+                      //   );
                       } else {
                         setState(() => _isAdding = true);
                         await operations.addWithdraw(
@@ -235,9 +235,16 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(
-              'Available Balance: \$${availableBalance.toStringAsFixed(2)}',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.deepOrange),
+              'Available Balance: ${availableBalance < 0
+                  ? '-\$${availableBalance.abs().toStringAsFixed(2)}'
+                  : '\$${availableBalance.toStringAsFixed(2)}'}',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.deepOrange,
+              ),
             ),
+
           ),
           Expanded(
             child: StreamBuilder(

@@ -135,58 +135,56 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
     double balance = totalDeposit - totalWithdraw;
 
     pdf.addPage(
-      pw.Page(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
         build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              // Person name header added here
-              pw.Text(
-                'Name : ${widget.personName}',
-                style: pw.TextStyle(
-                  fontSize: 20,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColors.blue900,
-                ),
+          return [
+            // Person name header
+            pw.Text(
+              'Name : ${widget.personName}',
+              style: pw.TextStyle(
+                fontSize: 20,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blue900,
               ),
-              pw.SizedBox(height: 10),
+            ),
+            pw.SizedBox(height: 10),
 
-              pw.Table.fromTextArray(
-                headers: ['Date', 'Description', 'Deposit', 'Withdraw', 'Balance'],
-                data: [
-                  ...filteredData.map((data) {
-                    return [
-                      _formatTimestamp(data['date']),
-                      data['description'].toString(),
-                      data['deposit'].toStringAsFixed(2),
-                      data['withdraw'].toStringAsFixed(2),
-                      data['balance'].toStringAsFixed(2),
-                    ];
-                  }),
-                  [
-                    'Total',
-                    '',
-                    totalDeposit.toStringAsFixed(2),
-                    totalWithdraw.toStringAsFixed(2),
-                    balance.toStringAsFixed(2),
-                  ],
+            pw.Table.fromTextArray(
+              headers: ['Date', 'Description', 'Deposit', 'Withdraw', 'Balance'],
+              data: [
+                ...filteredData.map((data) {
+                  return [
+                    _formatTimestamp(data['date']),
+                    data['description'].toString(),
+                    data['deposit'].toStringAsFixed(2),
+                    data['withdraw'].toStringAsFixed(2),
+                    data['balance'].toStringAsFixed(2),
+                  ];
+                }),
+                [
+                  'Total',
+                  '',
+                  totalDeposit.toStringAsFixed(2),
+                  totalWithdraw.toStringAsFixed(2),
+                  balance.toStringAsFixed(2),
                 ],
-                headerStyle: headerStyle,
-                cellStyle: dataStyle,
-                border: pw.TableBorder.all(width: 0.5, color: blackColor),
-                cellAlignment: pw.Alignment.centerLeft,
-                headerDecoration: pw.BoxDecoration(color: blueGreyColor),
-                cellHeight: 30,
-                columnWidths: {
-                  0: pw.FlexColumnWidth(2),
-                  1: pw.FlexColumnWidth(3),
-                  2: pw.FlexColumnWidth(2),
-                  3: pw.FlexColumnWidth(2),
-                  4: pw.FlexColumnWidth(2),
-                },
-              ),
-            ],
-          );
+              ],
+              headerStyle: headerStyle,
+              cellStyle: dataStyle,
+              border: pw.TableBorder.all(width: 0.5, color: blackColor),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerDecoration: pw.BoxDecoration(color: blueGreyColor),
+              cellHeight: 30,
+              columnWidths: {
+                0: const pw.FlexColumnWidth(2),
+                1: const pw.FlexColumnWidth(3),
+                2: const pw.FlexColumnWidth(2),
+                3: const pw.FlexColumnWidth(2),
+                4: const pw.FlexColumnWidth(2),
+              },
+            ),
+          ];
         },
       ),
     );
@@ -244,54 +242,53 @@ class _WarbixinScreenState extends State<WarbixinScreen> {
             const SizedBox(height: 20),
             Expanded(
               child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Card(
-                  elevation: 2,
-                  child: DataTable(
-                    headingRowColor: MaterialStateProperty.all(Colors.blue.shade100),
-
-                    columns: const [
-
-                      DataColumn(label: Text('Date')),
-                      DataColumn(label: Text('Description')),
-                      DataColumn(label: Text('Deposit')),
-                      DataColumn(label: Text('Withdraw')),
-                      DataColumn(label: Text('Balance')),
-                    ],
-
-                    rows: [
-
-                      ...filteredData.map(
-                            (data) => DataRow(cells: [
-                          DataCell(Text(_formatTimestamp(data['date']))),
-                          DataCell(Text(data['description'].toString())),
-                          DataCell(Text(data['deposit'].toStringAsFixed(2))),
-                          DataCell(Text(data['withdraw'].toStringAsFixed(2))),
-                          DataCell(Text(data['balance'].toStringAsFixed(2))),
-                        ]),
-                      ),
-                      DataRow(
-                        color: MaterialStateProperty.all(Colors.blue.shade50),
-                        cells: [
-                          const DataCell(
-                            Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-                          const DataCell(Text('')),
-                          DataCell(
-                            Text(totalDeposit.toStringAsFixed(2),
-                                style: const TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-                          DataCell(
-                            Text(totalWithdraw.toStringAsFixed(2),
-                                style: const TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-                          DataCell(
-                            Text(balance.toStringAsFixed(2),
-                                style: const TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                    ],
+                scrollDirection: Axis.vertical,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Card(
+                    elevation: 2,
+                    child: DataTable(
+                      headingRowColor: MaterialStateProperty.all(Colors.blue.shade100),
+                      columns: const [
+                        DataColumn(label: Text('Date')),
+                        DataColumn(label: Text('Description')),
+                        DataColumn(label: Text('Deposit')),
+                        DataColumn(label: Text('Withdraw')),
+                        DataColumn(label: Text('Balance')),
+                      ],
+                      rows: [
+                        ...filteredData.map(
+                          (data) => DataRow(cells: [
+                            DataCell(Text(_formatTimestamp(data['date']))),
+                            DataCell(Text(data['description'].toString())),
+                            DataCell(Text(data['deposit'].toStringAsFixed(2))),
+                            DataCell(Text(data['withdraw'].toStringAsFixed(2))),
+                            DataCell(Text(data['balance'].toStringAsFixed(2))),
+                          ]),
+                        ),
+                        DataRow(
+                          color: MaterialStateProperty.all(Colors.blue.shade50),
+                          cells: [
+                            const DataCell(
+                              Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                            const DataCell(Text('')),
+                            DataCell(
+                              Text(totalDeposit.toStringAsFixed(2),
+                                  style: const TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                            DataCell(
+                              Text(totalWithdraw.toStringAsFixed(2),
+                                  style: const TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                            DataCell(
+                              Text(balance.toStringAsFixed(2),
+                                  style: const TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

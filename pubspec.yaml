@@ -37,6 +37,7 @@ dependencies:
   printing: ^5.14.2
   pdf: ^3.11.3
   flutter_launcher_icons: ^0.14.3
+  rxdart: ^0.28.0
 
 dev_dependencies:
   flutter_test:

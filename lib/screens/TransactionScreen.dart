@@ -49,7 +49,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
       totalDeposits = deposits;
       totalWithdraws = withdraws;
       availableBalance =
-          (totalDeposits - totalWithdraws).clamp(0.0, double.infinity);
+          totalDeposits - totalWithdraws;
+          // (totalDeposits - totalWithdraws).clamp(0.0, double.infinity);
     });
   }
 
@@ -76,7 +77,12 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+        onWillPop: () async {
+          Navigator.pop(context, true); // send true back to Dashboard
+          return false; // prevent default pop
+        },
+    child:  Scaffold(
       appBar: AppBar(
         title: Text('Transactions'),
         backgroundColor: Colors.blue,
@@ -109,13 +115,16 @@ class _TransactionScreenState extends State<TransactionScreen> {
                         ),
                         SizedBox(height: 5),
                         Text(
-                          '\$${availableBalance.toStringAsFixed(2)}',
+                          availableBalance < 0
+                              ? '-\$${availableBalance.abs().toStringAsFixed(2)}'
+                              : '\$${availableBalance.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 22,
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+
                       ],
                     ),
                     Icon(
@@ -142,6 +151,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
           ],
         ),
       ),
+    )
     );
   }
 

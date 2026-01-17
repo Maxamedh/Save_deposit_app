@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:save_deposits/screens/summary_report_screen.dart';
 import 'TransactionScreen.dart';
 import 'package:save_deposits/operations.dart';
 import 'package:save_deposits/screens/LoginScreen.dart';
@@ -194,6 +195,14 @@ class _DashboardscreenState extends State<Dashboardscreen> {
   Future<void> _deletePerson(String personId) async {
     await _firestore.collection('persons').doc(personId).delete();
   }
+  String formatBalance(double balance) {
+    if (balance < 0) {
+      return '-\$${balance.abs().toStringAsFixed(2)}';
+    } else {
+      return '\$${balance.toStringAsFixed(2)}';
+    }
+  }
+
 
   void _showDeleteDialog(String personId) {
     showDialog(
@@ -270,6 +279,18 @@ class _DashboardscreenState extends State<Dashboardscreen> {
                 _showChangePasswordDialog(context);
               },
             ),
+            ListTile(
+              leading: Icon(Icons.table_chart),
+              title: Text('Summary Report'),
+              onTap: () {
+                Navigator.pop(context); // close drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SummaryReportScreen()),
+                );
+              },
+            ),
+
             ListTile(
               leading: const Icon(Icons.help),
               title: const Text('Help'),
@@ -350,6 +371,7 @@ class _DashboardscreenState extends State<Dashboardscreen> {
                                   ),
                                 ],
                               ),
+                              
                               padding: const EdgeInsets.all(16),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,7 +421,14 @@ class _DashboardscreenState extends State<Dashboardscreen> {
                                     children: [
                                       _buildStatBox('Credit(↑)', deposit, Colors.white.withOpacity(0.25), textColor: Colors.white),
                                       _buildStatBox('Debit(↓)', withdraw, Colors.white.withOpacity(0.25), textColor: Colors.white),
-                                      _buildStatBox('Balance', balance, Colors.white, textColor: Colors.deepPurple.shade700),
+                                      _buildStatBox(
+                                        'Balance',
+                                        balance,
+                                        Colors.white,
+                                        textColor: balance < 0 ? Colors.red : Colors.deepPurple.shade700,
+                                      ),
+
+
                                     ],
                                   ),
                                 ],
@@ -425,6 +454,11 @@ class _DashboardscreenState extends State<Dashboardscreen> {
   }
 
   Widget _buildStatBox(String label, double value, Color color, {Color textColor = Colors.black}) {
+
+    String displayValue = value < 0
+        ? '-\$${value.abs().toStringAsFixed(2)}'
+        : '\$${value.toStringAsFixed(2)}';
+
     return Container(
       width: 100,
       padding: const EdgeInsets.all(12),
@@ -436,7 +470,7 @@ class _DashboardscreenState extends State<Dashboardscreen> {
         children: [
           Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: textColor)),
           const SizedBox(height: 4),
-          Text("S ${value.toStringAsFixed(0)}",
+          Text(" $displayValue",
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColor)),
         ],
       ),
